@@ -1,6 +1,6 @@
 # RetrievalQA 사용
-from dotenv import load_dotenv
-load_dotenv()
+#from dotenv import load_dotenv
+#load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -12,9 +12,6 @@ from langchain.chains import RetrievalQA
 import os
 import streamlit as st
 import tempfile
-
-# Chroma DB가 저장된 디렉토리 경로
-persist_directory = './db/chromadb'
 
 #제목
 st.title("ChatPDF")
@@ -51,19 +48,30 @@ if uploaded_file is not None:
         #Embedding
         embeddings_model = OpenAIEmbeddings()
 
-        # load it into Chroma
-        if not os.path.exists(persist_directory):
-            chromadb = Chroma.from_documents(
-                texts, 
-                embeddings_model,
-                collection_name = 'esg',
-                persist_directory = persist_directory,
-            )
-        else:
-            chromadb = Chroma(
-                persist_directory=persist_directory,
-                embedding_function=embeddings_model,
-                collection_name='esg'
+        # load it into Chroma => 물리적 db 생성안하고 cache 만 사용
+        chromadb = Chroma.from_documents(
+            texts, 
+            embeddings_model,
+            collection_name = 'esg',
+        )
+
+        #Question
+        st.header("PDF에게 질문해보세요!!")
+        question = st.text_input('질문을 입력하세요')
+
+        if st.button('질문하기'):
+            with st.spinner('Wait for it...'):
+                llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+                qa_chain = RetrievalQA.from_chain_type(
+                                llm,
+                                retriever=chromadb.as_retriever(search_kwargs={"k": 3}),
+                                return_source_documents=True
+                            )
+                result = qa_chain({"query": question})
+                st.write(result["result"])
+                
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
             )
 
         #Question
