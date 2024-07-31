@@ -1,6 +1,9 @@
-langchain==0.1.7
+requirements.txt 
+langchain==0.2.1
+langchain-core==0.2.24
 langchain_openai==0.1.19
+langchain_community==0.2.1
 openai==1.37.1 
-streamlit==1.37.0
-langchain_community
-streamlit
+pypdf   
+tiktoken==0.7.0
+chromadb==0.4.15
